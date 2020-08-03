@@ -1,14 +1,3 @@
-os: linux
-dist: bionic
-
-language: python
-python: 3.7
-
-
-env:
- - BUILD_SHARED_LIBS=false
- - BUILD_SHARED_LIBS=true
-
 addons:
    apt:
       packages:
@@ -18,9 +7,30 @@ addons:
       - liblapack-dev
       - libopenmpi-dev
       - libscalapack-openmpi-dev
+   homebrew:
+      packages:
+      - ninja
+      - gcc@10
+      - open-mpi
+      - scalapack
+
+jobs:
+  include:
+    - os: linux
+      dist: bionic
+
+      language: python
+      python: 3.7
+
+      script:
+       - mkdir -p _build && pushd _build && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=ON -DEXTERNAL_LIBRARIES="scalapack-openmpi;lapack;blas" .. && make -j && popd
+
+    - os: osx
+      osx_image: xcode12
+      language: generic
+
+      script:
+       - cmake -GNinja -B_build -S. -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=ON -DEXTERNAL_LIBRARIES="scalapack;lapack;blas" && ninja -C_build
 
 install:
- - pip install fypp
-
-script:
- - mkdir -p _build && pushd _build && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} -DEXTERNAL_LIBRARIES="scalapack-openmpi;lapack;blas" .. && make -j && popd
+ - pip3 install fypp
